@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string
+    //   - photoURL: string
+    //   - role: string (enum: ['admin', 'user'])
+    //
+    // Collection: contacts
+    // Document ID: contactId
+    // Fields:
+    //   - id: string
+    //   - name: string (required)
+    //   - email: string
+    //   - phone: string
+    //   - company: string
+    //   - status: string (enum: ['Lead', 'Customer', 'Inactive'])
+    //   - ownerId: string (required)
+    //   - createdAt: timestamp
+    //
+    // Collection: deals
+    // Document ID: dealId
+    // Fields:
+    //   - id: string
+    //   - title: string (required)
+    //   - value: number (required)
+    //   - stage: string (enum: ['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'])
+    //   - contactId: string
+    //   - ownerId: string (required)
+    //   - createdAt: timestamp
+    //
+    // Collection: tasks
+    // Document ID: taskId
+    // Fields:
+    //   - id: string
+    //   - title: string (required)
+    //   - description: string
+    //   - dueDate: timestamp
+    //   - status: string (enum: ['Todo', 'In Progress', 'Done'])
+    //   - contactId: string
+    //   - ownerId: string (required)
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return true; // Allow unauthenticated access for this prototype as the login screen was removed
+    }
+
+    function isOwner(userId) {
+      return true; // Allow all access in this prototype
+    }
+
+    function isDocOwner() {
+      return true; // Allow all access in this prototype
+    }
+
+    function isAdmin() {
+      return true; // Allow all access in this prototype
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string && isValidEmail(data.email) &&
+             (!('role' in data) || data.role in ['admin', 'user']);
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll(['name', 'ownerId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.ownerId is string &&
+             (!('status' in data) || data.status in ['Lead', 'Customer', 'Inactive']);
+    }
+
+    function isValidDeal(data) {
+      return data.keys().hasAll(['title', 'value', 'stage', 'ownerId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.value is number &&
+             data.stage in ['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'] &&
+             data.ownerId is string;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['title', 'status', 'ownerId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.status in ['Todo', 'In Progress', 'Done'] &&
+             data.ownerId is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    match /contacts/{contactId} {
+      allow read, write: if true;
+    }
+
+    match /deals/{dealId} {
+      allow read, write: if true;
+    }
+
+    match /tasks/{taskId} {
+      allow read, write: if true;
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
